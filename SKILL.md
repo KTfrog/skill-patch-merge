@@ -20,7 +20,7 @@ allowed-tools: [Read, Write, Bash, FileExists, Glob]
 ## 🛠️ 执行步骤
 1. **确认补丁**
   - 用户是否有指定补丁文件名，如果没有，查找目标项目根目录下的*.diff文件，让用户选择。如果有指定补丁，则进行下一步自动化预处理。
-  - 如果目标项目根目录下没有找到*.diff文件，则提示用户输入platform的起始版本号startversion，svn的用户名和密码。然后进入和目标项目平级的platform目录下，执行svn diff -r startversion:HEAD --username 用户名 --password 密码 > patch.diff，生成补丁。然后拷贝patch.diff到目标项目根目录下。
+  - 如果目标项目根目录下没有找到*.diff文件，则提示用户输入platform的起始版本号startversion/endversion和svn的用户名和密码。然后进入和目标项目平级的platform目录下，执行svn diff -r startversion:endversion --username 用户名 --password 密码 > patch.diff，生成补丁。然后拷贝patch.diff到目标项目根目录下。
 2. **自动化预处理（调用本地脚本），解析原始完整补丁、标记补丁中每个文件状态、保存到json**：
    - 回到目标项目根目录，直接运行项目中的预处理脚本来完成解析、文件匹配、提取元数据和补丁。最终生成补丁元数据索引patch/files_need_merge.json。
    - 执行命令：`python3 ~/.claude/skills/svn-patch-merge/scripts/distill_patches.py patch.diff`，请根据实际的原始补丁文件名替代patch.diff。

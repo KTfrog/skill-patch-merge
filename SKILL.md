@@ -19,8 +19,9 @@ allowed-tools: [Read, Write, Bash, FileExists, Glob]
 
 ## 🛠️ 执行步骤
 1. **确认补丁**
-  - 用户是否有指定补丁文件名，如果没有，查找目标项目根目录下的*.diff文件，让用户选择。如果有指定补丁，则进行下一步自动化预处理。
-  - 如果目标项目根目录下没有找到*.diff文件，则提示用户输入platform的起始版本号startversion/endversion和svn的用户名和密码。然后进入和目标项目平级的platform目录下，执行svn diff -r startversion:endversion --username 用户名 --password 密码 > patch.diff，生成补丁。然后拷贝patch.diff到目标项目根目录下。
+   - 用户是否有指定补丁文件名，如果没有，查找目标项目根目录下的*.diff文件，让用户选择其中一个补丁文件。如果有指定补丁，则跳到下一步自动化预处理。
+   - 如果目标项目根目录下没有找到*.diff文件，则提示用户输入platform的起始版本号startversion/endversion和svn的用户名和密码，用于生成补丁。
+   - 然后进入和目标项目平级的platform目录下，执行svn diff -r startversion:endversion --username 用户名 --password 密码 > patch.diff，生成补丁。然后拷贝patch.diff到目标项目根目录下。
 2. **自动化预处理（调用本地脚本），解析原始完整补丁、标记补丁中每个文件状态、保存到json**：
    - 回到目标项目根目录，直接运行项目中的预处理脚本来完成解析、文件匹配、提取元数据和补丁。最终生成补丁元数据索引patch/files_need_merge.json。
    - 执行命令：`python3 ~/.claude/skills/svn-patch-merge/scripts/distill_patches.py patch.diff`，请根据实际的原始补丁文件名替代patch.diff。
@@ -31,8 +32,8 @@ allowed-tools: [Read, Write, Bash, FileExists, Glob]
    - 只有文件是“文本的”，且修改状态是“修改的”和“新增的”，则直接执行合并（注意查看补丁的上下文，把补丁代码插入到正确的位置），执行合并过程中不论遇到什么问题（例如文件权限问题）都尝试自己解决问题，永远不要让用户进行人工合并。
 4. **验证**  
 使用svn st | grep ^M获取哪些文件真正被修改了，验证是否符合预期。如果不符合预期则继续合并代码。
-5. **生成报告**：
-   - 输出合并统计：成功合并数、跳过数、需要人工合并的文件数。
+5. **生成合并报告**：
+   - 生成合并报告，并输出合并统计：成功合并数、跳过数、需要人工合并的文件数。
 
 ## ⚠️ 注意事项
 - 如果原始完整补丁格式无法解析，请立即停止并询问用户。

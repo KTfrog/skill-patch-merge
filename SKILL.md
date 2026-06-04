@@ -32,13 +32,31 @@ allowed-tools: [Read, Write, Bash, FileExists, Glob]
 ## 执行步骤
 
 ### 1. 确认补丁来源
-- 用户已指定补丁文件 → 直接进入步骤2
-- 未指定但项目根目录有 `*.diff` 文件 → 列出让用户选择
-- 未找到任何 `.diff` 文件 → 请用户提供起始版本号 `startversion/endversion` 和 SVN 账号密码，自动在平级 `platform` 目录执行 `svn diff` 生成补丁，拷贝到目标项目根目录
-  - **重要**：执行 `svn diff` 时必须 `cd` 到 `platform` 目录内部，使用 `.` 作为目标路径（而非绝对路径），这样生成的 `Index:` 行就是相对路径，避免后续处理时出现绝对路径匹配失败的问题：
-    ```
-    cd /path/to/platform && svn diff -r START:END --username USER --password PASS . > /path/to/project/patch.diff
-    ```
+
+> **交互规则**：本步骤涉及用户选择或输入时，**必须**使用 `AskUserQuestion` 工具，禁止用纯文本提问或自行猜测。
+
+按以下优先级处理：
+
+**情况A**：用户在消息中已指定补丁文件路径 → 直接进入步骤2预处理。
+
+**情况B**：用户未指定补丁文件，但项目根目录存在 `*.diff` 文件 →
+1. `Bash` 执行 `ls *.diff` 列出文件
+2. 调用 `AskUserQuestion`：
+   - `header`: `"选择补丁"`
+   - `question`: `"项目根目录下找到以下补丁文件，请选择要合并的补丁："`
+   - `options`: 每个 `.diff` 作为一个选项（超过4个时只列前4个，其余合并为"其他"选项）
+
+**情况C**：未找到任何 `.diff` 文件 →
+1. 调用 `AskUserQuestion`（一次调用包含3个问题）：
+   - 问题1: `header`: `"版本范围"`, `question`: `"请提供起始版本号（格式: startversion:endversion，如 371477:HEAD）"`
+   - 问题2: `header`: `"SVN账号"`, `question`: `"请提供 SVN 账号"`
+   - 问题3: `header`: `"SVN密码"`, `question`: `"请提供 SVN 密码"`
+2. 获取到信息后，在平级 `platform` 目录执行 svn diff 生成补丁，拷贝到目标项目根目录。
+
+   **重要**：执行 `svn diff` 时必须 `cd` 到 `platform` 目录内部，使用 `.` 作为目标路径（而非绝对路径），这样生成的 `Index:` 行就是相对路径：
+   ```
+   cd /path/to/platform && svn diff -r START:END --username USER --password PASS . > /path/to/project/patch.diff
+   ```
 
 ### 2. 预处理：拆分补丁
 运行脚本自动检测补丁格式(SVN diff / Git diff / Git format-patch)，按文件拆分、识别修改状态和文件类型，匹配目标项目中存在的文件，生成 `files_need_merge.json`：

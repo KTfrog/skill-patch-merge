@@ -66,7 +66,10 @@ python3 ~/.claude/skills/svn-patch-merge/scripts/distill_patches.py patch.diff
 ```
 
 ### 3. 逐文件合并
-读取 `files_need_merge.json`，按”快速参考”表中的决策逐文件处理。合并时注意根据补丁上下文将代码插入正确位置。遇到任何问题（如文件权限）自行解决，不让用户介入。
+- 读取 `files_need_merge.json`，按”快速参考”表中的决策逐文件处理。
+- 先尝试使用patch命令合并补丁
+- patch命令合并失败，则由AI大模型手动合并，合并时注意根据补丁上下文将代码插入正确位置。
+- 遇到任何问题（如文件权限）自行解决，不让用户介入。
 
 ### 4. 验证
 `svn st | grep ^M` 检查实际修改文件列表，不符合预期则继续调整。

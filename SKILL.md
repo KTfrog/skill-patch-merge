@@ -71,7 +71,17 @@ python3 ~/.claude/skills/svn-patch-merge/scripts/distill_patches.py patch.diff
 ### 4. 验证
 `svn st | grep ^M` 检查实际修改文件列表，不符合预期则继续调整。
 
-### 5. 输出报告
+### 5. 查看目标项目下是否存在子项目
+> **交互规则**：本步骤涉及用户选择时，**必须**使用 `AskUserQuestion` 工具。
+
+- `Bash` 执行 `ls sk_branches 2>/dev/null` 检查是否存在 `sk_branches` 目录。
+- 不存在则跳过本步骤。
+- 存在则：
+  1. 调用 `AskUserQuestion`（`multiSelect: true`），列出sk_branches下的所有子项目供用户多选。
+  2. 用户选择后，逐个 `cd` 进入选中的子项目目录，按步骤 2、3、4 执行合并（补丁文件使用项目根目录的同一份 `patch.diff`）。
+
+
+### 6. 输出报告
 输出合并统计：成功合并数、跳过数、需人工合并数。
 
 ## 常见错误与危险信号
